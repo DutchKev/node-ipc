@@ -3,17 +3,13 @@
 const net = require('net'),
     tls = require('tls'),
     eventParser = require('./eventParser.js'),
+    Events = require('event-pubsub'),
     Message = require('js-message'),
     fs = require('fs'),
     Queue = require('js-queue');
 
-let Events = require('event-pubsub/es5');
-if(process.version[1]>4){
-    Events = require('event-pubsub');
-}
-
 class Client extends Events{
-    constructor(config,log){
+    constructor(config,log,socket){
         super();
         Object.assign(
             this,
@@ -21,7 +17,7 @@ class Client extends Events{
                 Client  : Client,
                 config  : config,
                 queue   : new Queue,
-                socket  : false,
+                socket  : typeof socket == 'undefined' ? false : socket,
                 connect : connect,
                 emit    : emit,
                 log     : log,
@@ -67,6 +63,12 @@ function connect(){
     client.log('requested connection to ', client.id, client.path);
     if(!this.path){
         client.log('\n\n######\nerror: ', client.id ,' client has not specified socket path it wishes to connect to.');
+        return;
+    }
+
+    // TODO: Typeof + is connection up check
+    if (client.socket !== false) {
+        client.log('Connection already set');
         return;
     }
 
@@ -217,6 +219,14 @@ function connect(){
             for(let i=0; i<eCount; i++){
                 let message=new Message;
                 message.load(events[i]);
+
+                if (message.type === '__identify') {
+                    client.emit('__identify', {
+                        id: client.id,
+                        path: client.path
+                    });
+                    continue;
+                }
 
                 client.log('detected event', message.type, message.data);
                 client.publish(

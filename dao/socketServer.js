@@ -5,12 +5,9 @@ const net = require('net'),
     fs = require('fs'),
     dgram = require('dgram'),
     eventParser = require('./eventParser.js'),
-    Message = require('js-message');
-
-let Events = require('event-pubsub/es5');
-if(process.version[1]>4){
-    Events = require('event-pubsub');
-}
+    Events = require('event-pubsub'),
+    Message = require('js-message'),
+    Client = require('../dao/client.js');
 
 class Server extends Events{
     constructor(path,config,log,port){
@@ -27,7 +24,8 @@ class Server extends Events{
                 server          : false,
                 sockets         : [],
                 emit            : emit,
-                broadcast       : broadcast
+                broadcast       : broadcast,
+                of              : {}
             }
         );
 
@@ -243,10 +241,28 @@ function serverCreated(socket) {
         }.bind(this)
     );
 
-    this.publish(
-        'connect',
-        socket
-    );
+    if (this.config.noHandshake) {
+        this.publish(
+            'connect',
+            socket
+        );
+    } else {
+        this.on('__identify', function(clientDetails) {
+            var id = clientDetails.id;
+
+            this.of[id] = new Client(this.config, this.log, socket);
+            this.of[id].id = id;
+            this.of[id].path = clientDetails.path;
+
+            this.of[id].on('disconnect', function() {
+                delete this.of[id];
+            });
+
+            this.publish('connect', socket, this.of[id]);
+        }.bind(this));
+
+        this.emit(socket, '__identify');
+    }
 
     if(this.config.rawBuffer){
         return;

@@ -108,6 +108,11 @@ class Defaults{
                     enumerable:true,
                     writable:true,
                     value:false
+                },
+                noHandshake     : {
+                    enumerable:true,
+                    writable:true,
+                    value:false
                 }
             }
         );
