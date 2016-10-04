@@ -248,12 +248,13 @@ function serverCreated(socket) {
         );
     } else {
         this.on('__identify', function(clientDetails) {
-            var id = clientDetails.id,
-                clientConfig = Object.assign(this.config, {id: clientDetails.id, path: clientDetails.path});
+            let id = clientDetails.id,
+                path = clientDetails.path,
+                clientConfig = Object.assign(this.config, {id: id, path: path});
 
             this.of[id] = new Client(clientConfig, this.log, socket);
             this.of[id].id = id;
-            this.of[id].path = clientConfig.path;
+            this.of[id].path = path;
 
             this.of[id].on('disconnect', function() {
                 delete this.of[id];
