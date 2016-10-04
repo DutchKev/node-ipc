@@ -222,8 +222,8 @@ function connect(){
 
                 if (message.type === '__identify') {
                     client.emit('__identify', {
-                        id: client.id,
-                        path: client.path
+                        id: client.config.id
+                        //path: client.path
                     });
                     continue;
                 }
