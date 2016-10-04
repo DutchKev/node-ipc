@@ -149,8 +149,8 @@ function connect(){
         'close',
         function connectionClosed(){
             client.log('connection closed' ,client.id , client.path,
-            client.retriesRemaining, 'tries remaining of', client.config.maxRetries
-        );
+                client.retriesRemaining, 'tries remaining of', client.config.maxRetries
+            );
 
             if(
                 client.config.stopRetrying ||
@@ -190,8 +190,8 @@ function connect(){
             client.log('## received events ##');
             if(client.config.rawBuffer){
                 client.publish(
-                   'data',
-                   new Buffer(data,client.config.encoding)
+                    'data',
+                    new Buffer(data,client.config.encoding)
                 );
                 if(!client.config.sync){
                     return;
@@ -222,16 +222,18 @@ function connect(){
 
                 if (message.type === '__identify') {
                     client.emit('__identify', {
-                        id: client.config.id
-                        //path: client.path
+                        id: client.config.id,
+
+                        // TODO: This can't be right....
+                        path: client.config.socketRoot + client.config.appspace + client.config.id
                     });
                     continue;
                 }
 
                 client.log('detected event', message.type, message.data);
                 client.publish(
-                   message.type,
-                   message.data
+                    message.type,
+                    message.data
                 );
             }
 

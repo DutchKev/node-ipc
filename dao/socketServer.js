@@ -247,7 +247,22 @@ function serverCreated(socket) {
             socket
         );
     } else {
-        this.on('__identify', function(clientDetails) {
+
+        // Wait for handshake
+        var t = setTimeout(() => this.publish('error', 'Child connection did not finish handshake in time'), 2000);
+
+        // Handhake callback function
+        // Checks if its the same socket instance
+        var __identifyCb = (clientDetails, _socket) => {
+            if (_socket !== socket)
+                return;
+
+            // Clear handhake timeout
+            clearTimeout(t);
+
+            // Make sure event is removed
+            this.off('__identify', __identifyCb);
+
             let id = clientDetails.id,
                 path = clientDetails.path,
                 clientConfig = Object.assign(this.config, {id: id, path: path});
@@ -261,7 +276,9 @@ function serverCreated(socket) {
             });
 
             this.publish('connect', socket, this.of[id]);
-        }.bind(this));
+        };
+
+        this.on('__identify', __identifyCb);
 
         this.emit(socket, '__identify');
     }
